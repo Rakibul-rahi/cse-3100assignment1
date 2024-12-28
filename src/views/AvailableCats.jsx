@@ -1,9 +1,12 @@
 import { useEffect, useState } from 'react';
 
-// DropdownBar function passed as a prop
+// DropdownBar Component
 function DropdownBar({ options, onSelect }) {
   return (
-    <select className="form-select" onChange={(e) => onSelect(e.target.value)}>
+    <select
+      className="form-select"
+      onChange={(e) => onSelect(e.target.value)}
+    >
       <option value="">All Breeds</option>
       {options.map((option, index) => (
         <option key={index} value={option.value}>
@@ -14,6 +17,7 @@ function DropdownBar({ options, onSelect }) {
   );
 }
 
+// Main AvailableCats Component
 const availableCats = [
   { name: 'Whiskers', age: '2', breed: 'Sphynx' },
   { name: 'Mittens', age: '2', breed: 'Peterbald' },
@@ -29,9 +33,53 @@ const availableCats = [
 export default function AvailableCats() {
   const [cats, setCats] = useState([]);
   const [filteredCats, setFilteredCats] = useState([]);
+  const [searchQuery, setSearchQuery] = useState('');
   const [selectedBreed, setSelectedBreed] = useState('');
 
-  const options = [
+  // Fetch cat images and assign to cats array
+  useEffect(() => {
+    const fetchCatImages = async () => {
+      try {
+        const responses = await Promise.all(
+          availableCats.map(() =>
+            fetch('https://api.thecatapi.com/v1/images/search').then((res) =>
+              res.json()
+            )
+          )
+        );
+        const catsWithImages = availableCats.map((cat, index) => ({
+          ...cat,
+          image: responses[index][0].url,
+        }));
+        setCats(catsWithImages);
+        setFilteredCats(catsWithImages); // Initialize filteredCats with all cats
+      } catch (error) {
+        console.error('Error fetching cat images:', error);
+      }
+    };
+
+    fetchCatImages();
+  }, []);
+
+  // Update filteredCats when searchQuery or selectedBreed changes
+  useEffect(() => {
+    let result = cats;
+
+    if (selectedBreed) {
+      result = result.filter((cat) => cat.breed === selectedBreed);
+    }
+
+    if (searchQuery) {
+      result = result.filter((cat) =>
+        cat.name.toLowerCase().includes(searchQuery.toLowerCase())
+      );
+    }
+
+    setFilteredCats(result);
+  }, [searchQuery, selectedBreed, cats]);
+
+  // Breed options for dropdown
+  const breedOptions = [
     { label: 'Sphynx', value: 'Sphynx' },
     { label: 'Persian', value: 'Persian' },
     { label: 'Peterbald', value: 'Peterbald' },
@@ -42,49 +90,26 @@ export default function AvailableCats() {
     { label: 'Local', value: 'Local' },
   ];
 
-  useEffect(() => {
-    // Fetch cat images from an API endpoint
-    const fetchCatImages = async () => {
-      try {
-        const responses = await Promise.all(
-          availableCats.map(() =>
-            fetch('https://api.thecatapi.com/v1/images/search').then((res) => res.json())
-          )
-        );
-        const catsWithImages = availableCats.map((cat, index) => ({
-          ...cat,
-          image: responses[index][0].url,
-        }));
-
-        setCats(catsWithImages);
-        setFilteredCats(catsWithImages); // Initialize filteredCats
-      } catch (error) {
-        console.error('Error fetching cat images:', error);
-      }
-    };
-
-    fetchCatImages();
-  }, []);
-
-  useEffect(() => {
-    if (selectedBreed) {
-      setFilteredCats(cats.filter((cat) => cat.breed === selectedBreed));
-    } else {
-      setFilteredCats(cats);
-    }
-  }, [selectedBreed, cats]);
-
   return (
     <section className="text-center mt-4">
       <h2>Available Cats</h2>
       <p>Meet our adorable cats looking for their forever home!</p>
 
-      {/* Dropdown Filter */}
-      <div className="mb-4">
-        <DropdownBar options={options} onSelect={setSelectedBreed} />
+      {/* Filters */}
+      <div className="filters mb-4 d-flex justify-content-center align-items-center gap-3">
+        {/* Dropdown */}
+        <DropdownBar options={breedOptions} onSelect={setSelectedBreed} />
+        {/* Search Bar */}
+        <input
+          type="text"
+          placeholder="Search by name..."
+          className="form-control"
+          value={searchQuery}
+          onChange={(e) => setSearchQuery(e.target.value)}
+        />
       </div>
 
-      {/* Filtered Cat Cards */}
+      {/* Cat Cards */}
       <div className="mt-2 row g-4 cats-container" id="cats-container">
         {filteredCats.map((cat, i) => (
           <div key={i} className="col-md-4">
