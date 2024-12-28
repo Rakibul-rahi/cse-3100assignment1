@@ -19,6 +19,9 @@ footer {
 
 .cat-card {
   border: 1px solid #ddd;
+  min-height: 280px;
+  overflow: hidden;
+  border-radius: 10px;
   text-align: center;
   height: 250px;
   display: flex;
