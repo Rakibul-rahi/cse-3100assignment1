@@ -1,5 +1,7 @@
 
 import React from "react";
+import '../Contact.css';
+
 const ContactUs = () => {
     return (
       <div className="contact-us">
